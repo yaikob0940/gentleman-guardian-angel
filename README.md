@@ -45,13 +45,29 @@ You have coding standards. Your team ignores them. Code reviews catch issues too
 
 ---
 
+## 📦 Installation
+
+### Homebrew (Recommended)
+
+```bash
+brew tap gentleman-programming/tap
+brew install ai-code-review
+```
+
+### Manual Installation
+
+```bash
+git clone https://github.com/Gentleman-Programming/ai-code-review.git
+cd ai-code-review
+./install.sh
+```
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/AlanJui/ai-code-review.git
-cd ai-code-review
-./install.sh
+# 1. Install (see above)
 
 # 2. Go to your project
 cd ~/your-project
