@@ -25,6 +25,10 @@
 
 ---
 
+## Example
+
+<img width="962" height="941" alt="image" src="https://github.com/user-attachments/assets/c8963dff-6aa5-420c-b58b-1416e81af384" />
+
 ## 🎯 Why?
 
 You have coding standards. Your team ignores them. Code reviews catch issues too late.
