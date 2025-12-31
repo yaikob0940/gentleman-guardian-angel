@@ -9,7 +9,7 @@
 
 set -e
 
-VERSION="2.5.1"
+VERSION="2.6.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 
@@ -71,8 +71,10 @@ print_help() {
   echo ""
   echo -e "${BOLD}COMMANDS:${NC}"
   echo "  run [--no-cache]  Run code review on staged files"
-  echo "  install           Install git pre-commit hook in current repo"
-  echo "  uninstall         Remove git pre-commit hook from current repo"
+  echo "  install           Install git pre-commit hook (default)"
+  echo "  install --commit-msg"
+  echo "                    Install git commit-msg hook (for commit message validation)"
+  echo "  uninstall         Remove git hooks from current repo"
   echo "  config            Show current configuration"
   echo "  init              Create a sample .gga config file"
   echo "  cache clear       Clear cache for current project"
@@ -101,12 +103,13 @@ print_help() {
   echo "  STRICT_MODE        Fail on ambiguous AI response (default: true)"
   echo ""
   echo -e "${BOLD}EXAMPLES:${NC}"
-  echo "  gga init          # Create sample config"
-  echo "  gga install       # Install git hook"
-  echo "  gga run           # Run review (with cache)"
-  echo "  gga run --no-cache # Run review (ignore cache)"
-  echo "  gga run --ci      # Run review in CI (last commit)"
-  echo "  gga cache status  # Show cache info"
+  echo "  gga init               # Create sample config"
+  echo "  gga install            # Install pre-commit hook (default)"
+  echo "  gga install --commit-msg  # Install commit-msg hook"
+  echo "  gga run                # Run review (with cache)"
+  echo "  gga run --no-cache     # Run review (ignore cache)"
+  echo "  gga run --ci           # Run review in CI (last commit)"
+  echo "  gga cache status       # Show cache info"
   echo ""
   echo -e "${BOLD}ENVIRONMENT VARIABLES:${NC}"
   echo "  GGA_PROVIDER      Override provider from config"
@@ -295,15 +298,35 @@ cmd_install() {
     exit 1
   fi
 
+  # Parse arguments to determine hook type
+  local hook_type="pre-commit"  # default
+  
+  for arg in "$@"; do
+    case "$arg" in
+      --commit-msg)
+        hook_type="commit-msg"
+        ;;
+    esac
+  done
+
   # Use --git-path hooks to get the correct hooks directory
   # This works correctly for both regular repos and worktrees:
   # - Regular repo: returns .git/hooks
   # - Worktree: returns the main repo's .git/hooks (where git actually looks)
   HOOKS_DIR=$(git rev-parse --git-path hooks)
-  HOOK_PATH="$HOOKS_DIR/pre-commit"
+  HOOK_PATH="$HOOKS_DIR/$hook_type"
   
   # Ensure hooks directory exists (may not exist in fresh repos)
   mkdir -p "$HOOKS_DIR"
+
+  # Determine the gga run command based on hook type
+  # commit-msg hook receives the commit message file as $1, which GGA uses automatically
+  local gga_run_cmd
+  if [[ "$hook_type" == "commit-msg" ]]; then
+    gga_run_cmd='gga run "$1" || exit 1'
+  else
+    gga_run_cmd='gga run || exit 1'
+  fi
 
   # Check if hook already exists
   if [[ -f "$HOOK_PATH" ]]; then
@@ -323,19 +346,19 @@ cmd_install() {
 
     # Check if GGA is already installed (using markers)
     if grep -q "$GGA_MARKER_START" "$HOOK_PATH"; then
-      log_warning "Gentleman Guardian Angel hook already installed"
+      log_warning "Gentleman Guardian Angel hook already installed in $hook_type"
       exit 0
     fi
     
     # Existing hook without GGA - insert with markers
-    log_info "Existing pre-commit hook found, adding GGA..."
+    log_info "Existing $hook_type hook found, adding GGA..."
     
     # Build the GGA block
     local gga_block
     gga_block=$(printf '\n%s\n%s\n%s\n%s' \
       "$GGA_MARKER_START" \
       "# Gentleman Guardian Angel - Code Review" \
-      'gga run || exit 1' \
+      "$gga_run_cmd" \
       "$GGA_MARKER_END")
     
     # Check if hook ends with 'exit 0' or 'exit' (with optional whitespace)
@@ -357,7 +380,7 @@ cmd_install() {
         } > "$temp_file"
         mv "$temp_file" "$HOOK_PATH"
         chmod +x "$HOOK_PATH"
-        log_success "Inserted Gentleman Guardian Angel before exit in hook: $HOOK_PATH"
+        log_success "Inserted Gentleman Guardian Angel before exit in $hook_type hook: $HOOK_PATH"
         echo ""
         exit 0
       fi
@@ -365,7 +388,7 @@ cmd_install() {
     
     # No exit statement found, append to end
     echo "$gga_block" >> "$HOOK_PATH"
-    log_success "Appended Gentleman Guardian Angel to existing hook: $HOOK_PATH"
+    log_success "Appended Gentleman Guardian Angel to existing $hook_type hook: $HOOK_PATH"
     echo ""
     exit 0
   fi
@@ -376,12 +399,12 @@ cmd_install() {
 
 $GGA_MARKER_START
 # Gentleman Guardian Angel - Code Review
-gga run || exit 1
+$gga_run_cmd
 $GGA_MARKER_END
 EOF
 
   chmod +x "$HOOK_PATH"
-  log_success "Installed pre-commit hook: $HOOK_PATH"
+  log_success "Installed $hook_type hook: $HOOK_PATH"
   echo ""
 }
 
@@ -397,58 +420,68 @@ cmd_uninstall() {
   # Use --git-path hooks to get the correct hooks directory
   # This works correctly for both regular repos and worktrees
   HOOKS_DIR=$(git rev-parse --git-path hooks)
-  HOOK_PATH="$HOOKS_DIR/pre-commit"
+  
+  local found_any=false
 
-  if [[ ! -f "$HOOK_PATH" ]]; then
-    log_warning "No pre-commit hook found"
-    exit 0
+  # Check both hook types
+  for hook_type in "pre-commit" "commit-msg"; do
+    local hook_path="$HOOKS_DIR/$hook_type"
+    
+    if [[ -f "$hook_path" ]] && grep -q "gga" "$hook_path"; then
+      found_any=true
+      uninstall_from_hook "$hook_path" "$hook_type"
+    fi
+  done
+
+  if [[ "$found_any" == false ]]; then
+    log_warning "Gentleman Guardian Angel hook not found"
   fi
+  
+  echo ""
+}
+
+# Helper function to uninstall GGA from a specific hook file
+uninstall_from_hook() {
+  local hook_path="$1"
+  local hook_name="$2"
 
   # Check for GGA using markers first (new format)
-  if grep -q "$GGA_MARKER_START" "$HOOK_PATH"; then
+  if grep -q "$GGA_MARKER_START" "$hook_path"; then
     # Remove content between markers (inclusive)
     if [[ "$(uname)" == "Darwin" ]]; then
-      sed -i '' "/$GGA_MARKER_START/,/$GGA_MARKER_END/d" "$HOOK_PATH"
+      sed -i '' "/$GGA_MARKER_START/,/$GGA_MARKER_END/d" "$hook_path"
     else
-      sed -i "/$GGA_MARKER_START/,/$GGA_MARKER_END/d" "$HOOK_PATH"
+      sed -i "/$GGA_MARKER_START/,/$GGA_MARKER_END/d" "$hook_path"
     fi
     
     # Check if file is now empty or only has shebang/whitespace
     local remaining_content
-    remaining_content=$(grep -Ecv '^#!|^[[:space:]]*$' "$HOOK_PATH" || true)
+    remaining_content=$(grep -Ecv '^#!|^[[:space:]]*$' "$hook_path" || true)
     if [[ "$remaining_content" -eq 0 ]]; then
-      rm "$HOOK_PATH"
-      log_success "Removed pre-commit hook (was GGA-only)"
+      rm "$hook_path"
+      log_success "Removed $hook_name hook (was GGA-only)"
     else
-      log_success "Removed Gentleman Guardian Angel from pre-commit hook"
+      log_success "Removed Gentleman Guardian Angel from $hook_name hook"
     fi
-    echo ""
-    exit 0
-  fi
-
-  # Fallback: check for legacy format (without markers)
-  if ! grep -q "gga" "$HOOK_PATH"; then
-    log_warning "Gentleman Guardian Angel hook not found in pre-commit"
-    exit 0
+    return
   fi
 
   # Legacy format: check if it's our hook only or mixed
-  if grep -q "^gga run" "$HOOK_PATH" && [[ $(wc -l < "$HOOK_PATH") -le 5 ]]; then
+  if grep -q "^gga run" "$hook_path" && [[ $(wc -l < "$hook_path") -le 6 ]]; then
     # It's only our hook, remove the file
-    rm "$HOOK_PATH"
-    log_success "Removed pre-commit hook"
+    rm "$hook_path"
+    log_success "Removed $hook_name hook"
   else
     # Mixed hook, just remove our lines (legacy format)
     if [[ "$(uname)" == "Darwin" ]]; then
-      sed -i '' '/# Gentleman Guardian Angel/d' "$HOOK_PATH"
-      sed -i '' '/gga run/d' "$HOOK_PATH"
+      sed -i '' '/# Gentleman Guardian Angel/d' "$hook_path"
+      sed -i '' '/gga run/d' "$hook_path"
     else
-      sed -i '/# Gentleman Guardian Angel/d' "$HOOK_PATH"
-      sed -i '/gga run/d' "$HOOK_PATH"
+      sed -i '/# Gentleman Guardian Angel/d' "$hook_path"
+      sed -i '/gga run/d' "$hook_path"
     fi
-    log_success "Removed Gentleman Guardian Angel from pre-commit hook"
+    log_success "Removed Gentleman Guardian Angel from $hook_name hook"
   fi
-  echo ""
 }
 
 cmd_cache() {
@@ -522,6 +555,7 @@ cmd_cache() {
 cmd_run() {
   local use_cache=true
   local ci_mode=false
+  local commit_msg_file=""
   
   # Parse arguments
   for arg in "$@"; do
@@ -532,6 +566,12 @@ cmd_run() {
       --ci)
         ci_mode=true
         use_cache=false  # Cache doesn't make sense in CI
+        ;;
+      *)
+        # Non-flag argument is the commit message file (from commit-msg hook)
+        if [[ -f "$arg" ]]; then
+          commit_msg_file="$arg"
+        fi
         ;;
     esac
   done
@@ -671,13 +711,20 @@ cmd_run() {
   # Read rules
   RULES=$(cat "$RULES_FILE")
 
+  # Read commit message if provided (from commit-msg hook)
+  local commit_msg=""
+  if [[ -n "$commit_msg_file" && -f "$commit_msg_file" ]]; then
+    commit_msg=$(cat "$commit_msg_file")
+    log_info "Including commit message in review"
+  fi
+
   # Build prompt only with files to review
   # In CI mode, read from filesystem; otherwise read from staging area
   local use_staged="true"
   if [[ "$ci_mode" == "true" ]]; then
     use_staged="false"
   fi
-  PROMPT=$(build_prompt "$RULES" "$files_to_review" "$use_staged")
+  PROMPT=$(build_prompt "$RULES" "$files_to_review" "$use_staged" "$commit_msg")
 
   # Execute review
   log_info "Sending to $PROVIDER for review..."
@@ -875,6 +922,7 @@ build_prompt() {
   local rules="$1"
   local files="$2"
   local use_staged="${3:-true}"  # Read from staging area by default
+  local commit_msg="${4:-}"      # Optional commit message
 
   # Start building the prompt
   cat << EOF
@@ -883,6 +931,19 @@ You are a code reviewer. Analyze the files below and validate they comply with t
 === CODING STANDARDS ===
 $rules
 === END CODING STANDARDS ===
+EOF
+
+  # Include commit message if provided (from commit-msg hook)
+  if [[ -n "$commit_msg" ]]; then
+    cat << EOF
+
+=== COMMIT MESSAGE ===
+$commit_msg
+=== END COMMIT MESSAGE ===
+EOF
+  fi
+
+  cat << 'EOF'
 
 === FILES TO REVIEW ===
 EOF
@@ -939,7 +1000,8 @@ main() {
       cmd_run "$@"
       ;;
     install)
-      cmd_install
+      shift
+      cmd_install "$@"
       ;;
     uninstall)
       cmd_uninstall

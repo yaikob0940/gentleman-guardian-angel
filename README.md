@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.5.1-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.6.0-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/bash-5.0%2B-orange.svg" alt="Bash">
   <img src="https://img.shields.io/badge/homebrew-tap-FBB040.svg" alt="Homebrew">
-  <img src="https://img.shields.io/badge/tests-130%20passing-brightgreen.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-147%20passing-brightgreen.svg" alt="Tests">
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
 </p>
 
@@ -83,7 +83,7 @@ cd gga
 
 ```bash
 gga version
-# Output: gga v2.5.1
+# Output: gga v2.6.0
 ```
 
 ---
@@ -264,20 +264,21 @@ All files comply with the coding standards defined in AGENTS.md.
 
 ## 📋 Commands
 
-| Command           | Description                                  | Example               |
-| ----------------- | -------------------------------------------- | --------------------- |
-| `init`            | Create sample `.gga` config file             | `gga init`            |
-| `install`         | Install git pre-commit hook in current repo  | `gga install`         |
-| `uninstall`       | Remove git pre-commit hook from current repo | `gga uninstall`       |
-| `run`             | Run code review on staged files              | `gga run`             |
-| `run --ci`        | Run code review on last commit (for CI/CD)   | `gga run --ci`        |
-| `run --no-cache`  | Run review ignoring cache                    | `gga run --no-cache`  |
-| `config`          | Display current configuration and status     | `gga config`          |
-| `cache status`    | Show cache status for current project        | `gga cache status`    |
-| `cache clear`     | Clear cache for current project              | `gga cache clear`     |
-| `cache clear-all` | Clear all cached data                        | `gga cache clear-all` |
-| `help`            | Show help message with all commands          | `gga help`            |
-| `version`         | Show installed version                       | `gga version`         |
+| Command                | Description                                          | Example                    |
+| ---------------------- | ---------------------------------------------------- | -------------------------- |
+| `init`                 | Create sample `.gga` config file                     | `gga init`                 |
+| `install`              | Install git pre-commit hook (default)                | `gga install`              |
+| `install --commit-msg` | Install git commit-msg hook (for commit message validation) | `gga install --commit-msg` |
+| `uninstall`            | Remove git hooks from current repo                   | `gga uninstall`            |
+| `run`                  | Run code review on staged files                      | `gga run`                  |
+| `run --ci`             | Run code review on last commit (for CI/CD)           | `gga run --ci`             |
+| `run --no-cache`       | Run review ignoring cache                            | `gga run --no-cache`       |
+| `config`               | Display current configuration and status             | `gga config`               |
+| `cache status`         | Show cache status for current project                | `gga cache status`         |
+| `cache clear`          | Clear cache for current project                      | `gga cache clear`          |
+| `cache clear-all`      | Clear all cached data                                | `gga cache clear-all`      |
+| `help`                 | Show help message with all commands                  | `gga help`                 |
+| `version`              | Show installed version                               | `gga version`              |
 
 ### Command Details
 
@@ -292,14 +293,25 @@ $ gga init
 
 #### `gga install`
 
-Installs a git pre-commit hook that automatically runs code review on every commit.
+Installs a git hook that automatically runs code review on every commit.
+
+**Default (pre-commit hook):**
 
 ```bash
 $ gga install
 ✅ Installed pre-commit hook: .git/hooks/pre-commit
 ```
 
-If a pre-commit hook already exists, it will ask if you want to append to it.
+**With commit message validation (commit-msg hook):**
+
+```bash
+$ gga install --commit-msg
+✅ Installed commit-msg hook: .git/hooks/commit-msg
+```
+
+The `--commit-msg` flag installs a commit-msg hook instead of pre-commit. This allows GGA to also validate your commit message (e.g., conventional commits format, issue references, etc.). The commit message is automatically included in the AI review.
+
+If a hook already exists, GGA will append to it rather than replacing it.
 
 #### `gga uninstall`
 

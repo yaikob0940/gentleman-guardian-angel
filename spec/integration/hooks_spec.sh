@@ -84,6 +84,28 @@ EOF
       # Assert GGA comes before exit - using test command with assertion
       Assert [ "$gga_line" -lt "$exit_line" ]
     End
+
+    It 'creates commit-msg hook with --commit-msg flag'
+      "$GGA_BIN" install --commit-msg >/dev/null 2>&1
+      The path ".git/hooks/commit-msg" should be file
+      The path ".git/hooks/pre-commit" should not be exist
+      The contents of file ".git/hooks/commit-msg" should include "# ======== GGA START ========"
+      The contents of file ".git/hooks/commit-msg" should include 'gga run "$1" || exit 1'
+      The contents of file ".git/hooks/commit-msg" should include "# ======== GGA END ========"
+    End
+
+    It 'commit-msg hook passes commit message file to gga run'
+      "$GGA_BIN" install --commit-msg >/dev/null 2>&1
+      # The hook should have "$1" to pass the commit message file
+      The contents of file ".git/hooks/commit-msg" should include '"$1"'
+    End
+
+    It 'pre-commit hook does NOT have $1 argument'
+      "$GGA_BIN" install >/dev/null 2>&1
+      # pre-commit hook should use simple "gga run" without $1
+      The contents of file ".git/hooks/pre-commit" should include "gga run || exit 1"
+      The contents of file ".git/hooks/pre-commit" should not include '"$1"'
+    End
   End
 
   Describe 'cmd_uninstall'
@@ -123,6 +145,27 @@ EOF
       "$GGA_BIN" uninstall >/dev/null 2>&1
       
       The path ".git/hooks/pre-commit" should not be exist
+    End
+
+    It 'removes commit-msg hook when installed with --commit-msg'
+      "$GGA_BIN" install --commit-msg >/dev/null 2>&1
+      "$GGA_BIN" uninstall >/dev/null 2>&1
+      
+      The path ".git/hooks/commit-msg" should not be exist
+    End
+
+    It 'removes both hooks if both are installed'
+      # Install both hooks (edge case - maybe user ran install twice with different flags)
+      "$GGA_BIN" install >/dev/null 2>&1
+      "$GGA_BIN" install --commit-msg >/dev/null 2>&1
+      
+      The path ".git/hooks/pre-commit" should be file
+      The path ".git/hooks/commit-msg" should be file
+      
+      "$GGA_BIN" uninstall >/dev/null 2>&1
+      
+      The path ".git/hooks/pre-commit" should not be exist
+      The path ".git/hooks/commit-msg" should not be exist
     End
   End
 End
